@@ -1,36 +1,66 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useState, useEffect } from "react";
 import Image from "next/image";
+import { motion, useScroll, useTransform, useMotionValueEvent, AnimatePresence } from "framer-motion";
+import { Toaster, toast } from "sonner";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Chessboard } from "react-chessboard";
+import { Chess } from "chess.js";
+import { ChevronDown } from "lucide-react";
+
+// --- Form Schema ---
+const bookingSchema = z.object({
+  firstName: z.string().min(2, "Prénom requis"),
+  lastName: z.string().min(2, "Nom requis"),
+  email: z.string().email("Email invalide"),
+  date: z.string().optional(),
+  message: z.string().optional(),
+});
+type BookingFormValues = z.infer<typeof bookingSchema>;
+
+// --- Reveal Component ---
+const Reveal = ({ children, className = "", delay = 0, style }: { children: React.ReactNode, className?: string, delay?: number, style?: React.CSSProperties }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 40 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: "-40px" }}
+    transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay }}
+    className={className}
+    style={style}
+  >
+    {children}
+  </motion.div>
+);
+
+// --- FAQ Data ---
+const faqs = [
+  { q: "Dois-je amener mon propre jeu d'échecs ?", a: "Non, nous fournissons des jeux en bois Staunton haut de gamme pour toutes les parties et cours." },
+  { q: "Quel niveau physique est requis pour le MMA ?", a: "Aucun ! Notre coach adapte la séance à 100%. Que vous soyez sédentaire ou athlète, vous progresserez en toute sécurité." },
+  { q: "Et si la météo n'est pas clémente ?", a: "La villa dispose d'un vaste espace vitré très lumineux. Le programme se déroule tout aussi bien en intérieur qu'en extérieur." },
+  { q: "Le repas est-il adapté aux régimes spéciaux ?", a: "Absolument. Lors de la confirmation, nous vous demanderons vos préférences ou intolérances (végétarien, sans gluten, etc.)." }
+];
 
 export default function HomePage() {
+  // Navigation State
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 60);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Scroll reveal animation
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("reveal--visible");
-          }
-        });
-      },
-      { threshold: 0.15, rootMargin: "0px 0px -40px 0px" }
-    );
-
-    document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
+  const { scrollY } = useScroll();
+  
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const previous = scrollY.getPrevious() ?? 0;
+    setScrolled(latest > 60);
+    // Hide nav on scroll down, show on scroll up (if past hero)
+    if (latest > 150 && latest > previous && !mobileMenuOpen) {
+      setHidden(true);
+    } else {
+      setHidden(false);
+    }
+  });
 
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
@@ -40,45 +70,100 @@ export default function HomePage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert("Merci ! Nous reviendrons vers vous très vite.");
+  // Form State
+  const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<BookingFormValues>({
+    resolver: zodResolver(bookingSchema)
+  });
+
+  const onSubmit = async (data: BookingFormValues) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        toast.success(`Merci ${data.firstName} !`, {
+          description: "Votre demande de réservation a bien été envoyée. Nous revenons vers vous d'ici 24h.",
+          duration: 5000,
+        });
+        reset();
+        resolve(true);
+      }, 1500);
+    });
   };
+
+  // Chess Easter Egg State — Pool de puzzles Mat en 1
+  const puzzles = [
+    { fen: "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4", hint: "La Dame vise un point faible classique..." },
+    { fen: "r1bqk2r/pppp1Qpp/2n2n2/2b1p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4", hint: "Les Noirs ne peuvent plus protéger leur Roi..." },
+    { fen: "rnbqkbnr/ppppp2p/8/5ppQ/4P3/8/PPPP1PPP/RNB1KBNR w KQkq g6 0 3", hint: "Une diagonale grande ouverte..." },
+    { fen: "r1b1k1nr/ppppqppp/2n5/2b1p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4", hint: "f7 est toujours un point sensible..." },
+    { fen: "rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 2", hint: "La diagonale h4-e1 est ouverte..." },
+    { fen: "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4", hint: "Visez f7, le talon d'Achille !" },
+  ];
+
+  const [puzzleIndex, setPuzzleIndex] = useState(0);
+  const currentPuzzle = puzzles[puzzleIndex];
+  const [game, setGame] = useState(new Chess(puzzles[0].fen));
+  const [solved, setSolved] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    const randomIdx = Math.floor(Math.random() * puzzles.length);
+    setPuzzleIndex(randomIdx);
+    setGame(new Chess(puzzles[randomIdx].fen));
+    setIsMounted(true);
+  }, []);
+
+  const makeMove = ({ sourceSquare, targetSquare }: { sourceSquare: string, targetSquare: string | null }) => {
+    if (!targetSquare) return false;
+    try {
+      const move = game.move({
+        from: sourceSquare,
+        to: targetSquare,
+        promotion: 'q', // always promote to queen for simplicity
+      });
+
+      if (move === null) return false;
+      
+      const newGame = new Chess(game.fen());
+      setGame(newGame);
+
+      if (newGame.isCheckmate()) {
+        setTimeout(() => {
+          setSolved(true);
+          toast.success("Brillant !", { description: "Mat en 1 trouvé. Mentionnez-le dans votre réservation pour un accueil spécial !" });
+        }, 300);
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  // FAQ State
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   return (
     <>
+      <Toaster position="bottom-right" richColors theme="light" />
+
       {/* ======================== NAVIGATION ======================== */}
-      <nav className={`nav ${scrolled ? "nav--scrolled" : ""}`}>
+      <motion.nav 
+        variants={{
+          visible: { y: 0 },
+          hidden: { y: "-100%" }
+        }}
+        animate={hidden ? "hidden" : "visible"}
+        transition={{ duration: 0.35, ease: "easeInOut" }}
+        className={`nav ${scrolled ? "nav--scrolled" : ""}`}
+      >
         <a href="#" className="nav__logo">
           Chess<span>&amp;</span>Perf
         </a>
 
         <ul className="nav__links">
-          <li>
-            <a className="nav__link" onClick={() => scrollToSection("experience")}>
-              L&apos;expérience
-            </a>
-          </li>
-          <li>
-            <a className="nav__link" onClick={() => scrollToSection("journee")}>
-              La journée
-            </a>
-          </li>
-          <li>
-            <a className="nav__link" onClick={() => scrollToSection("cadre")}>
-              Le cadre
-            </a>
-          </li>
-          <li>
-            <a className="nav__link" onClick={() => scrollToSection("equipe")}>
-              L&apos;équipe
-            </a>
-          </li>
-          <li>
-            <a className="nav__cta" onClick={() => scrollToSection("reserver")}>
-              Réserver
-            </a>
-          </li>
+          <li><a className="nav__link" onClick={() => scrollToSection("experience")}>L&apos;expérience</a></li>
+          <li><a className="nav__link" onClick={() => scrollToSection("journee")}>La journée</a></li>
+          <li><a className="nav__link" onClick={() => scrollToSection("cadre")}>Le cadre</a></li>
+          <li><a className="nav__link" onClick={() => scrollToSection("equipe")}>L&apos;équipe</a></li>
+          <li><a className="nav__cta" onClick={() => scrollToSection("reserver")}>Réserver</a></li>
         </ul>
 
         <button
@@ -86,34 +171,27 @@ export default function HomePage() {
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Menu"
         >
-          <span></span>
-          <span></span>
-          <span></span>
+          <span></span><span></span><span></span>
         </button>
-      </nav>
+      </motion.nav>
 
       {/* Mobile Menu */}
       <div className={`nav__mobile-menu ${mobileMenuOpen ? "nav__mobile-menu--open" : ""}`}>
-        <a className="nav__link" onClick={() => scrollToSection("experience")}>
-          L&apos;expérience
-        </a>
-        <a className="nav__link" onClick={() => scrollToSection("journee")}>
-          La journée
-        </a>
-        <a className="nav__link" onClick={() => scrollToSection("cadre")}>
-          Le cadre
-        </a>
-        <a className="nav__link" onClick={() => scrollToSection("equipe")}>
-          L&apos;équipe
-        </a>
-        <a className="nav__cta" onClick={() => scrollToSection("reserver")}>
-          Réserver ma journée
-        </a>
+        <a className="nav__link" onClick={() => scrollToSection("experience")}>L&apos;expérience</a>
+        <a className="nav__link" onClick={() => scrollToSection("journee")}>La journée</a>
+        <a className="nav__link" onClick={() => scrollToSection("cadre")}>Le cadre</a>
+        <a className="nav__link" onClick={() => scrollToSection("equipe")}>L&apos;équipe</a>
+        <a className="nav__cta" onClick={() => scrollToSection("reserver")}>Réserver ma journée</a>
       </div>
 
       {/* ======================== HERO ======================== */}
       <section className="hero" id="hero">
-        <div className="hero__bg">
+        <motion.div 
+          initial={{ scale: 1.1 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 2, ease: "easeOut" }}
+          className="hero__bg"
+        >
           <Image
             src="/images/69aa487a.jpg"
             alt="Villa méditerranéenne de rêve à Montpellier"
@@ -123,129 +201,101 @@ export default function HomePage() {
             sizes="100vw"
           />
           <div className="hero__overlay" />
-        </div>
+        </motion.div>
 
         <div className="hero__content">
-          <p className="hero__label">Montpellier · Sud de France</p>
-          <h1 className="hero__title">
-            Sport, échecs <span className="hero__title-accent">&amp;</span>
-            <br />
-            soleil
-          </h1>
-          <p className="hero__subtitle">
-            Une journée d&apos;exception où le corps s&apos;éveille et
-            l&apos;esprit s&apos;affûte. Fitness, gastronomie et échecs dans
-            une villa de rêve.
-          </p>
-          <div className="hero__actions">
-            <button
-              className="btn btn--primary btn--large"
-              onClick={() => scrollToSection("reserver")}
-            >
-              Réserver ma journée
-            </button>
-            <button
-              className="btn btn--white btn--large"
-              onClick={() => scrollToSection("experience")}
-            >
-              Découvrir l&apos;expérience
-            </button>
-          </div>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.8 }}
+            className="hero__label"
+          >
+            Montpellier · Sud de France
+          </motion.p>
+          <motion.h1 
+            initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 1 }}
+            className="hero__title"
+          >
+            Sport, échecs <span className="hero__title-accent">&amp;</span><br />soleil
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8, duration: 1 }}
+            className="hero__subtitle"
+          >
+            Une journée d&apos;exception où le corps s&apos;éveille et l&apos;esprit s&apos;affûte. Fitness, gastronomie et échecs dans une villa de rêve.
+          </motion.p>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1, duration: 0.8 }}
+            className="hero__actions"
+          >
+            <button className="btn btn--primary btn--large" onClick={() => scrollToSection("reserver")}>Réserver ma journée</button>
+            <button className="btn btn--white btn--large" onClick={() => scrollToSection("experience")}>Découvrir l&apos;expérience</button>
+          </motion.div>
         </div>
 
-        <div className="hero__scroll-indicator">
+        <motion.div 
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5, duration: 1 }}
+          className="hero__scroll-indicator"
+        >
           <span>Scroll</span>
           <div className="hero__scroll-line" />
-        </div>
+        </motion.div>
       </section>
 
       {/* ======================== EXPERIENCE ======================== */}
       <section className="section section--cream" id="experience">
         <div className="container">
-          <div className="section__header reveal">
+          <Reveal className="section__header">
             <span className="label">Le concept</span>
-            <h2>
-              Trois piliers,<br />
-              une seule journée
-            </h2>
-            <p>
-              Chess&amp;Perf, c&apos;est bien plus qu&apos;une simple activité.
-              C&apos;est une parenthèse complète pour le corps et l&apos;esprit,
-              dans un cadre qui fait le reste.
-            </p>
-          </div>
+            <h2>Trois piliers,<br />une seule journée</h2>
+            <p>Chess&amp;Perf, c&apos;est bien plus qu&apos;une simple activité. C&apos;est une parenthèse complète pour le corps et l&apos;esprit, dans un cadre qui fait le reste.</p>
+          </Reveal>
         </div>
 
         <div className="experience__rows">
           {/* Row 1: Sport */}
-          <div className="experience__row reveal">
-            <div className="experience__visual">
-              <Image
-                src="/images/sport-deck.png"
-                alt="Séance fitness sur la terrasse bois"
-                fill
-                style={{ objectFit: "cover" }}
-                sizes="50vw"
-              />
-            </div>
+          <div className="experience__row">
+            <Reveal className="experience__visual" delay={0.2}>
+              <Image src="/images/sport-deck.png" alt="Séance fitness sur la terrasse bois" fill style={{ objectFit: "cover" }} sizes="50vw" />
+            </Reveal>
             <div className="experience__text">
               <span className="experience__number">01</span>
-              <div className="experience__accent-line" />
-              <span className="label">Sport</span>
-              <h3>Le corps en mouvement</h3>
-              <p>
-                Fitness fonctionnel et initiation MMA encadrés par un coach
-                agréé. Peu importe votre niveau, on s&apos;adapte. L&apos;idée ?
-                Transpirer, se dépasser et sourire.
-              </p>
+              <Reveal>
+                <div className="experience__accent-line" />
+                <span className="label">Sport</span>
+                <h3>Le corps en mouvement</h3>
+                <p>Fitness fonctionnel et initiation MMA encadrés par un coach agréé. Peu importe votre niveau, on s&apos;adapte. L&apos;idée ? Transpirer, se dépasser et sourire.</p>
+              </Reveal>
             </div>
           </div>
 
           {/* Row 2: Gastronomie */}
-          <div className="experience__row reveal">
-            <div className="experience__visual">
-              <Image
-                src="/images/lunch-patio.png"
-                alt="Déjeuner sain sur la grande terrasse"
-                fill
-                style={{ objectFit: "cover" }}
-                sizes="50vw"
-              />
-            </div>
+          <div className="experience__row">
+            <Reveal className="experience__visual" delay={0.2}>
+              <Image src="/images/lunch-patio.png" alt="Déjeuner sain sur la grande terrasse" fill style={{ objectFit: "cover" }} sizes="50vw" />
+            </Reveal>
             <div className="experience__text">
               <span className="experience__number">02</span>
-              <div className="experience__accent-line" />
-              <span className="label label--gold">Gastronomie</span>
-              <h3>La pause qui fait du bien</h3>
-              <p>
-                Un déjeuner convivial préparé avec soin, servi en plein air.
-                Le moment parfait pour reprendre son souffle et échanger
-                avant de passer aux échecs.
-              </p>
+              <Reveal>
+                <div className="experience__accent-line" />
+                <span className="label label--gold">Gastronomie</span>
+                <h3>La pause qui fait du bien</h3>
+                <p>Un déjeuner convivial préparé avec soin, servi en plein air. Le moment parfait pour reprendre son souffle et échanger avant de passer aux échecs.</p>
+              </Reveal>
             </div>
           </div>
 
           {/* Row 3: Échecs */}
-          <div className="experience__row reveal">
-            <div className="experience__visual">
-              <Image
-                src="/images/chess-patio.png"
-                alt="Partie d'échecs sur la terrasse de la villa"
-                fill
-                style={{ objectFit: "cover" }}
-                sizes="50vw"
-              />
-            </div>
+          <div className="experience__row">
+            <Reveal className="experience__visual" delay={0.2}>
+              <Image src="/images/chess-patio.png" alt="Partie d'échecs sur la terrasse de la villa" fill style={{ objectFit: "cover" }} sizes="50vw" />
+            </Reveal>
             <div className="experience__text">
               <span className="experience__number">03</span>
-              <div className="experience__accent-line" />
-              <span className="label" style={{ color: "var(--terracotta)" }}>Échecs</span>
-              <h3>L&apos;esprit en jeu</h3>
-              <p>
-                Cours et parties accompagnées par un professeur d&apos;échecs
-                passionné. Débutants bienvenus. Stratégie, concentration et
-                plaisir du jeu.
-              </p>
+              <Reveal>
+                <div className="experience__accent-line" />
+                <span className="label" style={{ color: "var(--terracotta)" }}>Échecs</span>
+                <h3>L&apos;esprit en jeu</h3>
+                <p>Cours et parties accompagnées par un professeur d&apos;échecs passionné. Débutants bienvenus. Stratégie, concentration et plaisir du jeu.</p>
+              </Reveal>
             </div>
           </div>
         </div>
@@ -254,253 +304,147 @@ export default function HomePage() {
       {/* ======================== LA JOURNÉE ======================== */}
       <section className="section section--white" id="journee">
         <div className="container">
-          <div className="section__header reveal">
+          <Reveal className="section__header">
             <span className="label label--gold">Votre journée type</span>
-            <h2>
-              Du lever au fou rire,<br />
-              <span style={{ color: "var(--terracotta)" }}>minute par minute</span>
-            </h2>
-          </div>
+            <h2>Du lever au fou rire,<br /><span style={{ color: "var(--terracotta)" }}>minute par minute</span></h2>
+          </Reveal>
 
           <div className="journey__timeline">
-            {/* Step 1: Accueil */}
-            <div className="journey__step reveal">
-              <div className="journey__dot" />
-              <div className="journey__image">
-                <Image
-                  src="/images/69aa487a.jpg"
-                  alt="Accueil à la villa"
-                  width={600}
-                  height={450}
-                  style={{ objectFit: "cover", width: "100%", height: "100%" }}
-                />
-              </div>
-              <div className="journey__info">
-                <span className="journey__time">9h00</span>
-                <h3>Accueil &amp; café</h3>
-                <p>
-                  Arrivée à la villa. On pose ses affaires, on prend un café,
-                  on fait connaissance. Le cadre fait le reste — jardin, piscine,
-                  soleil.
-                </p>
-              </div>
-            </div>
-
-            {/* Step 2: Sport */}
-            <div className="journey__step reveal">
-              <div className="journey__dot" />
-              <div className="journey__image">
-                <Image
-                  src="/images/sport-deck.png"
-                  alt="Séance de sport en plein air"
-                  width={600}
-                  height={450}
-                  style={{ objectFit: "cover", width: "100%", height: "100%" }}
-                />
-              </div>
-              <div className="journey__info">
-                <span className="journey__time">10h00 – 12h00</span>
-                <h3>Fitness &amp; MMA</h3>
-                <p>
-                  Deux heures encadrées par un coach agréé. Renforcement
-                  musculaire, cardio, et initiation aux techniques de MMA.
-                  Tous niveaux, bonne humeur garantie.
-                </p>
-              </div>
-            </div>
-
-            {/* Step 3: Repas */}
-            <div className="journey__step reveal">
-              <div className="journey__dot" />
-              <div className="journey__image">
-                <Image
-                  src="/images/lunch-patio.png"
-                  alt="Déjeuner en plein air"
-                  width={600}
-                  height={450}
-                  style={{ objectFit: "cover", width: "100%", height: "100%" }}
-                />
-              </div>
-              <div className="journey__info">
-                <span className="journey__time">12h30</span>
-                <h3>Déjeuner au soleil</h3>
-                <p>
-                  Repas frais et convivial servi en terrasse. Le moment de
-                  reprendre des forces, discuter stratégie, et profiter du
-                  cadre exceptionnel.
-                </p>
-              </div>
-            </div>
-
-            {/* Step 4: Échecs */}
-            <div className="journey__step reveal">
-              <div className="journey__dot" />
-              <div className="journey__image">
-                <Image
-                  src="/images/chess-patio.png"
-                  alt="Cours d'échecs en terrasse"
-                  width={600}
-                  height={450}
-                  style={{ objectFit: "cover", width: "100%", height: "100%" }}
-                />
-              </div>
-              <div className="journey__info">
-                <span className="journey__time">14h00 – 17h00</span>
-                <h3>Échecs &amp; stratégie</h3>
-                <p>
-                  Cours, parties et analyse de jeu avec un professeur
-                  d&apos;échecs. Que vous soyez débutant ou joueur confirmé,
-                  chaque partie est un plaisir.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ======================== LE CADRE ======================== */}
-      <section className="section section--cream" id="cadre">
-        <div className="container">
-          <div className="section__header reveal">
-            <span className="label">Le cadre</span>
-            <h2>
-              Une villa d&apos;exception<br />
-              <span style={{ color: "var(--terracotta)" }}>au cœur de Montpellier</span>
-            </h2>
-          </div>
-
-          <div className="cadre__image-wrapper reveal">
-            <Image
-              src="/images/69aa487a.jpg"
-              alt="Villa méditerranéenne avec piscine et jardin"
-              fill
-              style={{ objectFit: "cover" }}
-              sizes="100vw"
-            />
-            <div className="cadre__overlay-content">
-              <span className="label">Montpellier · Hérault</span>
-              <h2>Votre écrin pour la journée</h2>
-              <p>
-                Une villa méditerranéenne baignée de soleil, avec jardin
-                privatif et piscine. Le cadre idéal pour une journée hors
-                du temps.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Marquee Ticker */}
-        <div className="cadre__marquee">
-          <div className="cadre__marquee-track">
-            {[...Array(2)].map((_, setIdx) => (
-              <Fragment key={setIdx}>
-                <div className="cadre__marquee-item">
-                  <span>Piscine privée</span>
+            {[
+              { time: "9h00", title: "Accueil & café", desc: "Arrivée à la villa. On pose ses affaires, on prend un café, on fait connaissance. Le cadre fait le reste — jardin, piscine, soleil.", img: "/images/69aa487a.jpg" },
+              { time: "10h00 – 12h00", title: "Fitness & MMA", desc: "Deux heures encadrées par un coach agréé. Renforcement musculaire, cardio, et initiation aux techniques de MMA. Tous niveaux, bonne humeur garantie.", img: "/images/sport-deck.png" },
+              { time: "12h30", title: "Déjeuner au soleil", desc: "Repas frais et convivial servi en terrasse. Le moment de reprendre des forces, discuter stratégie, et profiter du cadre exceptionnel.", img: "/images/lunch-patio.png" },
+              { time: "14h00 – 17h00", title: "Échecs & stratégie", desc: "Cours, parties et analyse de jeu avec un professeur d'échecs. Que vous soyez débutant ou joueur confirmé, chaque partie est un plaisir.", img: "/images/chess-patio.png" }
+            ].map((step, idx) => (
+              <Reveal key={idx} className="journey__step" delay={idx * 0.1}>
+                <div className="journey__dot" />
+                <div className="journey__image">
+                  <Image src={step.img} alt={step.title} width={600} height={450} style={{ objectFit: "cover", width: "100%", height: "100%" }} />
                 </div>
-                <div className="cadre__marquee-dot" />
-                <div className="cadre__marquee-item">
-                  <span>Jardin méditerranéen</span>
+                <div className="journey__info">
+                  <span className="journey__time">{step.time}</span>
+                  <h3>{step.title}</h3>
+                  <p>{step.desc}</p>
                 </div>
-                <div className="cadre__marquee-dot" />
-                <div className="cadre__marquee-item">
-                  <span>Terrasse panoramique</span>
-                </div>
-                <div className="cadre__marquee-dot" />
-                <div className="cadre__marquee-item">
-                  <span>Espace repas extérieur</span>
-                </div>
-                <div className="cadre__marquee-dot" />
-                <div className="cadre__marquee-item">
-                  <span>300 jours de soleil</span>
-                </div>
-                <div className="cadre__marquee-dot" />
-                <div className="cadre__marquee-item">
-                  <span>Parking privatif</span>
-                </div>
-                <div className="cadre__marquee-dot" />
-              </Fragment>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ======================== L'ÉQUIPE ======================== */}
-      <section className="section section--white" id="equipe">
+      {/* ======================== CADRE ======================== */}
+      <section className="section section--cream" id="cadre">
         <div className="container">
-          <div className="section__header reveal">
-            <span className="label">L&apos;équipe</span>
-            <h2>
-              Des passionnés<br />
-              <span style={{ color: "var(--terracotta)" }}>à votre service</span>
-            </h2>
-            <p>
-              Deux experts, deux univers, une même passion : vous faire
-              vivre une journée inoubliable.
-            </p>
-          </div>
+          <Reveal className="section__header">
+            <span className="label">Le cadre</span>
+            <h2>Une villa d&apos;exception<br /><span style={{ color: "var(--terracotta)" }}>au cœur de Montpellier</span></h2>
+          </Reveal>
+
+          <Reveal className="cadre__image-wrapper">
+            <Image src="/images/69aa487a.jpg" alt="Villa méditerranéenne" fill style={{ objectFit: "cover" }} sizes="100vw" />
+            <div className="cadre__overlay-content">
+              <span className="label">Montpellier · Hérault</span>
+              <h2>Votre écrin pour la journée</h2>
+              <p>Une villa méditerranéenne baignée de soleil, avec jardin privatif et piscine. Le cadre idéal pour une journée hors du temps.</p>
+            </div>
+          </Reveal>
         </div>
+      </section>
 
-        <div className="team__grid">
-          {/* Panel 1: Coach Sport */}
-          <div className="team__panel reveal">
-            <div className="team__visual">
-              <Image
-                src="/images/coach-portrait.png"
-                alt="Portrait du coach sportif"
-                fill
-                style={{ objectFit: "cover" }}
-              />
-              <div className="team__visual-bg" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)" }} />
-              <div className="team__visual-content">
-                <div className="team__visual-discipline">Sport</div>
-              </div>
-            </div>
-            <div className="team__info">
-              <span className="label">Sport</span>
-              <h3>Le Coach Sportif</h3>
-              <p className="team__role">Fitness &amp; MMA · Coach agréé</p>
-              <p>
-                Spécialiste du renforcement et des sports de combat, notre
-                coach adapte chaque séance à votre niveau. Son objectif :
-                que vous repartiez avec le sourire et les bras un peu lourds.
-              </p>
-              <div className="team__credentials">
-                <span className="team__credential">Coach agréé</span>
-                <span className="team__credential">Fitness</span>
-                <span className="team__credential">MMA</span>
-              </div>
-            </div>
-          </div>
+      {/* ======================== CHESS WIDGET ======================== */}
+      <section className="section section--white" style={{ paddingBottom: 0 }}>
+        <div className="container">
+          <Reveal className="section__header" style={{ marginBottom: 0 }}>
+            <span className="label" style={{ color: "var(--terracotta)" }}>L&apos;Instant Stratégie</span>
+            <h2>Trouvez le Mat en 1</h2>
+            <p>{game.turn() === 'w' ? 'Les blancs' : 'Les noirs'} jouent et gagnent. Un nouveau puzzle à chaque visite !</p>
+          </Reveal>
+          
+          <Reveal className="chess-widget">
+             <div className="chess-widget__container">
+               {isMounted && (
+                 <p style={{ fontSize: "0.85rem", color: "var(--charcoal-light)", fontStyle: "italic", textAlign: "center", marginBottom: "var(--space-md)" }}>
+                   💡 {currentPuzzle.hint}
+                 </p>
+               )}
+               {isMounted ? (
+                 <div style={{ width: "100%", aspectRatio: "1/1" }}>
+                   <Chessboard 
+                     options={{
+                       position: game.fen(),
+                       boardOrientation: "white",
+                       onPieceDrop: makeMove,
+                       darkSquareStyle: { backgroundColor: "#D4956F" },
+                       lightSquareStyle: { backgroundColor: "#F0E9DF" },
+                       dropSquareStyle: { boxShadow: "inset 0 0 1px 4px #D4B05A" },
+                       allowDragging: !solved
+                     }}
+                   />
+                 </div>
+               ) : (
+                 <div style={{ aspectRatio: "1/1", width: "100%", background: "var(--cream)" }} />
+               )}
+               
+               <AnimatePresence>
+                {solved && (
+                  <motion.div 
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    className="chess-widget__success"
+                  >
+                    <div className="chess-widget__success-icon">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    </div>
+                    <h3 style={{ fontSize: "1.5rem", fontFamily: "var(--font-display)", marginBottom: "var(--space-sm)" }}>Excellent !</h3>
+                    <p style={{ fontSize: "0.85rem", color: "var(--charcoal-light)" }}>Précisez &quot;Mat trouvé&quot; dans le message de réservation.</p>
+                  </motion.div>
+                )}
+               </AnimatePresence>
+             </div>
+          </Reveal>
+        </div>
+      </section>
 
-          {/* Panel 2: Prof Échecs */}
-          <div className="team__panel reveal">
-            <div className="team__visual">
-              <Image
-                src="/images/chess-portrait.png"
-                alt="Portrait du professeur d'échecs"
-                fill
-                style={{ objectFit: "cover" }}
-              />
-              <div className="team__visual-bg" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%)" }} />
-              <div className="team__visual-content">
-                <div className="team__visual-discipline">Échecs</div>
-              </div>
-            </div>
-            <div className="team__info">
-              <span className="label">Échecs</span>
-              <h3>Le Professeur d&apos;Échecs</h3>
-              <p className="team__role">Enseignant &amp; joueur passionné</p>
-              <p>
-                Pédagogue avant tout, notre professeur d&apos;échecs rend
-                le jeu accessible et captivant. Débutants comme joueurs
-                confirmés trouvent leur compte.
-              </p>
-              <div className="team__credentials">
-                <span className="team__credential">Professeur certifié</span>
-                <span className="team__credential">Pédagogue</span>
-                <span className="team__credential">Compétiteur</span>
-              </div>
-            </div>
+      {/* ======================== FAQ ======================== */}
+      <section className="section section--white">
+        <div className="container container--narrow">
+          <Reveal className="section__header">
+            <span className="label">Questions Fréquentes</span>
+            <h2>Tout ce qu'il faut savoir</h2>
+          </Reveal>
+
+          <div className="faq-list">
+            {faqs.map((faq, i) => (
+              <Reveal key={i} delay={i * 0.1}>
+                <div 
+                  className={`faq-item ${openFaq === i ? 'faq-item--open' : ''}`}
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                >
+                  <div className="faq-item__header">
+                    <h4 className="faq-item__question">{faq.q}</h4>
+                    <motion.div
+                      animate={{ rotate: openFaq === i ? 180 : 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="faq-item__icon"
+                    >
+                      <ChevronDown size={24} />
+                    </motion.div>
+                  </div>
+                  <AnimatePresence>
+                    {openFaq === i && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
+                        className="faq-item__content"
+                      >
+                        <p className="faq-item__answer">{faq.a}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
@@ -508,67 +452,51 @@ export default function HomePage() {
       {/* ======================== RÉSERVER ======================== */}
       <section className="section section--sand" id="reserver">
         <div className="container">
-          <div className="booking__grid reveal">
+          <Reveal className="booking__grid">
             <div className="booking__intro">
               <span className="label">On y est presque</span>
-              <h2>
-                Votre parenthèse<br />
-                <span className="booking__intro-accent">commence ici</span>
-              </h2>
-              <p>
-                Remplissez vos informations, nous vous recontacterons sous 24h
-                pour personnaliser votre journée (niveau d&apos;échecs actuel, détails physiques).
-              </p>
+              <h2>Votre parenthèse<br /><span className="booking__intro-accent">commence ici</span></h2>
+              <p>Remplissez vos informations, nous vous recontacterons sous 24h pour personnaliser votre journée (niveau d'échecs actuel, détails physiques).</p>
 
               <div className="booking__includes">
-                <div className="booking__include">
-                  <span className="booking__include-icon">✓</span>
-                  Sport &amp; sur-mesure (2h)
-                </div>
-                <div className="booking__include">
-                  <span className="booking__include-icon">✓</span>
-                  Déjeuner sain du chef
-                </div>
-                <div className="booking__include">
-                  <span className="booking__include-icon">✓</span>
-                  Masterclass d&apos;échecs (3h)
-                </div>
-                <div className="booking__include">
-                  <span className="booking__include-icon">✓</span>
-                  Privatisation complète
-                </div>
+                {["Sport & sur-mesure (2h)", "Déjeuner sain du chef", "Masterclass d'échecs (3h)", "Privatisation complète"].map((inc, i) => (
+                  <div key={i} className="booking__include"><span className="booking__include-icon">✓</span>{inc}</div>
+                ))}
               </div>
             </div>
 
-            <form className="booking__form" onSubmit={handleSubmit}>
+            <form className="booking__form" onSubmit={handleSubmit(onSubmit)}>
               <div className="booking__row">
                 <div className="booking__field">
-                  <input type="text" className="booking__input" placeholder=" " required id="booking-firstName" />
-                  <label htmlFor="booking-firstName" className="booking__label">Prénom</label>
+                  <input {...register("firstName")} type="text" className="booking__input" placeholder=" " id="bf" />
+                  <label htmlFor="bf" className="booking__label">Prénom</label>
+                  {errors.firstName && <span className="booking__error">{errors.firstName.message}</span>}
                 </div>
                 <div className="booking__field">
-                  <input type="text" className="booking__input" placeholder=" " required id="booking-lastName" />
-                  <label htmlFor="booking-lastName" className="booking__label">Nom</label>
+                  <input {...register("lastName")} type="text" className="booking__input" placeholder=" " id="bl" />
+                  <label htmlFor="bl" className="booking__label">Nom</label>
+                  {errors.lastName && <span className="booking__error">{errors.lastName.message}</span>}
                 </div>
               </div>
-              <div className="booking__field">
-                <input type="email" className="booking__input" placeholder=" " required id="booking-email" />
-                <label htmlFor="booking-email" className="booking__label">Adresse email</label>
+              <div className="booking__field" style={{ marginTop: "1.5rem" }}>
+                <input {...register("email")} type="email" className="booking__input" placeholder=" " id="be" />
+                <label htmlFor="be" className="booking__label">Adresse email</label>
+                {errors.email && <span className="booking__error">{errors.email.message}</span>}
               </div>
-              <div className="booking__field">
-                <input type="date" className="booking__input" placeholder=" " id="booking-date" />
-                <label htmlFor="booking-date" className="booking__label">Date souhaitée</label>
+              <div className="booking__field" style={{ marginTop: "1.5rem" }}>
+                <input {...register("date")} type="date" className="booking__input" placeholder=" " id="bd" />
+                <label htmlFor="bd" className="booking__label">Date souhaitée</label>
               </div>
-              <div className="booking__field">
-                <textarea className="booking__input booking__textarea" placeholder=" " id="booking-message"></textarea>
-                <label htmlFor="booking-message" className="booking__label">Un message particulier ?</label>
+              <div className="booking__field" style={{ marginTop: "1.5rem" }}>
+                <textarea {...register("message")} className="booking__input booking__textarea" placeholder=" " id="bm"></textarea>
+                <label htmlFor="bm" className="booking__label">Un message particulier ?</label>
               </div>
-              <button type="submit" className="booking__submit">
-                <span>Envoyer ma demande</span>
+              <button disabled={isSubmitting} type="submit" className="booking__submit" style={{ marginTop: "2rem", opacity: isSubmitting ? 0.7 : 1 }}>
+                <span>{isSubmitting ? "Envoi..." : "Envoyer ma demande"}</span>
                 <div className="booking__submit-line" />
               </button>
             </form>
-          </div>
+          </Reveal>
         </div>
       </section>
 
@@ -577,43 +505,25 @@ export default function HomePage() {
         <div className="container">
           <div className="footer__content">
             <div>
-              <div className="footer__logo">
-                Chess<span>&amp;</span>Perf
-              </div>
-              <p className="footer__tagline">
-                Sport, échecs &amp; soleil à Montpellier
-              </p>
+              <div className="footer__logo">Chess<span>&amp;</span>Perf</div>
+              <p className="footer__tagline">Sport, échecs &amp; soleil à Montpellier</p>
             </div>
-
             <div className="footer__links">
               <div className="footer__column">
                 <h4>Navigation</h4>
-                <a onClick={() => scrollToSection("experience")}>
-                  L&apos;expérience
-                </a>
+                <a onClick={() => scrollToSection("experience")}>L&apos;expérience</a>
                 <a onClick={() => scrollToSection("journee")}>La journée</a>
                 <a onClick={() => scrollToSection("cadre")}>Le cadre</a>
-                <a onClick={() => scrollToSection("equipe")}>L&apos;équipe</a>
               </div>
               <div className="footer__column">
                 <h4>Contact</h4>
                 <p>Montpellier, France</p>
-                <a href="mailto:contact@chessandperf.com">
-                  contact@chessandperf.com
-                </a>
+                <a href="mailto:contact@chessandperf.com">contact@chessandperf.com</a>
               </div>
             </div>
           </div>
-
           <div className="footer__bottom">
-            <p className="footer__copyright">
-              © 2025 Chess&amp;Perf. Tous droits réservés.
-            </p>
-            <div className="footer__social">
-              <a href="#" aria-label="Instagram">IG</a>
-              <a href="#" aria-label="LinkedIn">LI</a>
-              <a href="#" aria-label="TikTok">TK</a>
-            </div>
+            <p className="footer__copyright">© 2026 Chess&amp;Perf. Tous droits réservés.</p>
           </div>
         </div>
       </footer>

@@ -3,8 +3,7 @@
    Ultra-premium Mediterranean experience brand
    ============================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@300;400;500;600&display=swap');
-
+/* Import Google Fonts supprimé pour optimisation SEO via next/font dans layout.tsx */
 /* --- CSS Custom Properties --- */
 :root {
   /* Brand Colors */
@@ -24,8 +23,8 @@
   --gold-light: #D4B05A;
 
   /* Typography */
-  --font-display: 'Cormorant Garamond', 'Georgia', serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-display: var(--font-outfit), 'Inter', sans-serif;
+  --font-body: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   /* Spacing (8px base) */
   --space-xs: 0.25rem;   /* 4px */
@@ -1403,4 +1402,101 @@ p {
     gap: var(--space-md);
     text-align: center;
   }
+}
+
+/* --- Chess Widget --- */
+.chess-widget {
+  margin-top: var(--space-xl);
+  display: flex;
+  justify-content: center;
+  position: relative;
+  z-index: 10;
+}
+.chess-widget__container {
+  width: 100%;
+  max-width: 450px;
+  background: var(--cream);
+  border: 1px solid var(--sand);
+  border-radius: var(--radius-xl);
+  padding: var(--space-xl);
+  padding-bottom: var(--space-2xl);
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+.chess-widget__success {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-xl);
+}
+.chess-widget__success-icon {
+  width: 64px;
+  height: 64px;
+  background: #E8F5E9;
+  color: #2E7D32;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-md);
+}
+
+/* --- FAQ --- */
+.faq-list {
+  max-width: 800px;
+  margin: 0 auto;
+}
+.faq-item {
+  border-bottom: 1px solid var(--sand);
+  cursor: pointer;
+  transition: border-color var(--duration-base) var(--ease-out);
+}
+.faq-item:hover, .faq-item--open {
+  border-color: var(--sage-light);
+}
+.faq-item__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-lg) 0;
+}
+.faq-item__question {
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--charcoal);
+  flex: 1;
+  padding-right: var(--space-xl);
+  transition: color var(--duration-base) var(--ease-out);
+}
+.faq-item:hover .faq-item__question, .faq-item--open .faq-item__question {
+  color: var(--terracotta);
+}
+.faq-item__icon {
+  color: var(--sage);
+}
+.faq-item__content {
+  overflow: hidden;
+}
+.faq-item__answer {
+  color: var(--charcoal-light);
+  font-size: 0.95rem;
+  padding-bottom: var(--space-lg);
+  line-height: 1.8;
+}
+
+/* --- Form Errors --- */
+.booking__error {
+  position: absolute;
+  bottom: -18px;
+  left: 0;
+  color: #D32F2F;
+  font-size: 0.75rem;
 }
