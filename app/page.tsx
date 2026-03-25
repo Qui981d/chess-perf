@@ -90,12 +90,10 @@ export default function HomePage() {
 
   // Chess Easter Egg State — Pool de puzzles Mat en 1
   const puzzles = [
-    { fen: "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4", hint: "La Dame vise un point faible classique..." },
-    { fen: "r1bqk2r/pppp1Qpp/2n2n2/2b1p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 0 4", hint: "Les Noirs ne peuvent plus protéger leur Roi..." },
-    { fen: "rnbqkbnr/ppppp2p/8/5ppQ/4P3/8/PPPP1PPP/RNB1KBNR w KQkq g6 0 3", hint: "Une diagonale grande ouverte..." },
-    { fen: "r1b1k1nr/ppppqppp/2n5/2b1p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4", hint: "f7 est toujours un point sensible..." },
-    { fen: "rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 2", hint: "La diagonale h4-e1 est ouverte..." },
-    { fen: "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4", hint: "Visez f7, le talon d'Achille !" },
+    { fen: "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4", hint: "Un classique des ouvertures..." },
+    { fen: "rnbqkbnr/ppppp2p/8/5ppQ/4P3/8/PPPP1PPP/RNB1KBNR w KQkq g6 0 3", hint: "Les pions ont trop bougé..." },
+    { fen: "rnbqkbnr/pppp1ppp/4p3/8/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq - 0 2", hint: "Le Roi blanc est très exposé..." },
+    { fen: "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 4 4", hint: "Cherchez la case faible..." },
   ];
 
   const [puzzleIndex, setPuzzleIndex] = useState(0);
@@ -117,7 +115,7 @@ export default function HomePage() {
       const move = game.move({
         from: sourceSquare,
         to: targetSquare,
-        promotion: 'q', // always promote to queen for simplicity
+        promotion: 'q',
       });
 
       if (move === null) return false;
@@ -130,6 +128,12 @@ export default function HomePage() {
           setSolved(true);
           toast.success("Brillant !", { description: "Mat en 1 trouvé. Mentionnez-le dans votre réservation pour un accueil spécial !" });
         }, 300);
+      } else {
+        // Mauvais coup — reset après un court délai
+        setTimeout(() => {
+          toast.error("Raté !", { description: "Ce n'est pas le mat. Réessayez !" });
+          setGame(new Chess(currentPuzzle.fen));
+        }, 800);
       }
       return true;
     } catch (e) {
