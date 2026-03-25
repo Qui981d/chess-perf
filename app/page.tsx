@@ -192,14 +192,17 @@ export default function HomePage() {
           transition={{ duration: 2, ease: "easeOut" }}
           className="hero__bg"
         >
-          <Image
-            src="/images/69aa487a.jpg"
-            alt="Villa méditerranéenne de rêve à Montpellier"
-            fill
-            priority
-            style={{ objectFit: "cover" }}
-            sizes="100vw"
-          />
+          {/* Video hero — place ton fichier dans /public/videos/hero.mp4 */}
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            poster="/images/69aa487a.jpg"
+            className="hero__video"
+          >
+            <source src="/Video/Vid%C3%A9o_G%C3%A9n%C3%A9r%C3%A9e_%C3%A0_Partir_d_Images.mp4" type="video/mp4" />
+          </video>
           <div className="hero__overlay" />
         </motion.div>
 
