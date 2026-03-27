@@ -159,7 +159,7 @@ export default function HomePage() {
         className={`nav ${scrolled ? "nav--scrolled" : ""}`}
       >
         <a href="#" className="nav__logo">
-          Chess<span>&amp;</span>Perf
+          Chess<span>&amp;</span>Fit
         </a>
 
         <ul className="nav__links">
@@ -167,6 +167,7 @@ export default function HomePage() {
           <li><a className="nav__link" onClick={() => scrollToSection("journee")}>La journée</a></li>
           <li><a className="nav__link" onClick={() => scrollToSection("cadre")}>Le cadre</a></li>
           <li><a className="nav__link" onClick={() => scrollToSection("equipe")}>L&apos;équipe</a></li>
+          <li><a className="nav__link" href="/blog">Blog</a></li>
           <li><a className="nav__cta" onClick={() => scrollToSection("reserver")}>Réserver</a></li>
         </ul>
 
@@ -185,6 +186,7 @@ export default function HomePage() {
         <a className="nav__link" onClick={() => scrollToSection("journee")}>La journée</a>
         <a className="nav__link" onClick={() => scrollToSection("cadre")}>Le cadre</a>
         <a className="nav__link" onClick={() => scrollToSection("equipe")}>L&apos;équipe</a>
+        <a className="nav__link" href="/blog">Blog</a>
         <a className="nav__cta" onClick={() => scrollToSection("reserver")}>Réserver ma journée</a>
       </div>
 
@@ -253,7 +255,7 @@ export default function HomePage() {
           <Reveal className="section__header">
             <span className="label">Le concept</span>
             <h2>Trois piliers,<br />une seule journée</h2>
-            <p>Chess&amp;Perf, c&apos;est bien plus qu&apos;une simple activité. C&apos;est une parenthèse complète pour le corps et l&apos;esprit, dans un cadre qui fait le reste.</p>
+            <p>Chess&amp;Fit, c&apos;est bien plus qu&apos;une simple activité. C&apos;est une parenthèse complète pour le corps et l&apos;esprit, dans un cadre qui fait le reste.</p>
           </Reveal>
         </div>
 
@@ -354,6 +356,137 @@ export default function HomePage() {
               <h2>Votre écrin pour la journée</h2>
               <p>Une villa méditerranéenne baignée de soleil, avec jardin privatif et piscine. Le cadre idéal pour une journée hors du temps.</p>
             </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ======================== L'ÉQUIPE — COACHES ======================== */}
+      <section className="section section--cream coaches-section" id="equipe">
+        <div className="container">
+          <Reveal className="coaches__header">
+            <span className="label label--gold">L&apos;équipe</span>
+            <h2>Ceux qui encadrent<br /><span style={{ color: "var(--terracotta)" }}>votre journée</span></h2>
+            <p>Deux spécialistes triés sur le volet pour que chaque heure soit maîtrisée, chaleureuse et inoubliable.</p>
+          </Reveal>
+        </div>
+
+        <div className="coaches-diptych">
+          {/* Coach Sport */}
+          <Reveal className="coaches-diptych__pane">
+            <div className="coaches-diptych__photo">
+              <Image src="/images/coach-sport-hero.png" alt="Coach sportif encadrant une séance fitness" fill style={{ objectFit: "cover" }} sizes="(max-width: 1024px) 100vw, 50vw" />
+            </div>
+            <div className="coaches-diptych__overlay coaches-diptych__overlay--sport" />
+            <div className="coaches-diptych__content">
+              <div className="coaches-diptych__tag">
+                <span className="coaches-diptych__tag-line" />
+                <span className="coaches-diptych__tag-text">Sport &amp; MMA</span>
+              </div>
+              <h3 className="coaches-diptych__name">Le Coach Sportif</h3>
+              <p className="coaches-diptych__role">Préparateur physique · MMA · Fitness fonctionnel</p>
+              <blockquote className="coaches-diptych__quote">
+                &ldquo;Le sport n&apos;est pas une question de performance, c&apos;est une question de dépassement de soi.&rdquo;
+              </blockquote>
+              <div className="coaches-diptych__stats">
+                <div className="coaches-diptych__stat">
+                  <span className="coaches-diptych__stat-val">10+</span>
+                  <span className="coaches-diptych__stat-lbl">Ans d&apos;expérience</span>
+                </div>
+                <div className="coaches-diptych__stat">
+                  <span className="coaches-diptych__stat-val">500+</span>
+                  <span className="coaches-diptych__stat-lbl">Élèves coachés</span>
+                </div>
+                <div className="coaches-diptych__stat">
+                  <span className="coaches-diptych__stat-val">BPJEPS</span>
+                  <span className="coaches-diptych__stat-lbl">Diplôme d&apos;État</span>
+                </div>
+              </div>
+              <div className="coaches-diptych__credentials">
+                {["MMA", "Cross-Training", "Prépa physique", "Self-défense"].map((cred, i) => (
+                  <span key={i} className="coaches-diptych__credential">{cred}</span>
+                ))}
+              </div>
+            </div>
+          </Reveal>
+
+          {/* Coach Échecs */}
+          <Reveal className="coaches-diptych__pane" delay={0.15}>
+            <div className="coaches-diptych__photo">
+              <Image src="/images/coach-chess-hero.png" alt="Maître d'échecs enseignant la stratégie" fill style={{ objectFit: "cover" }} sizes="(max-width: 1024px) 100vw, 50vw" />
+            </div>
+            <div className="coaches-diptych__overlay coaches-diptych__overlay--chess" />
+            <div className="coaches-diptych__content">
+              <div className="coaches-diptych__tag">
+                <span className="coaches-diptych__tag-line" />
+                <span className="coaches-diptych__tag-text">Échecs &amp; Stratégie</span>
+              </div>
+              <h3 className="coaches-diptych__name">Le Maître d&apos;Échecs</h3>
+              <p className="coaches-diptych__role">Professeur d&apos;échecs · Formateur · Compétiteur</p>
+              <blockquote className="coaches-diptych__quote">
+                &ldquo;Aux échecs comme dans la vie, c&apos;est celui qui voit le plus loin qui gagne la partie.&rdquo;
+              </blockquote>
+              <div className="coaches-diptych__stats">
+                <div className="coaches-diptych__stat">
+                  <span className="coaches-diptych__stat-val">15+</span>
+                  <span className="coaches-diptych__stat-lbl">Ans de pratique</span>
+                </div>
+                <div className="coaches-diptych__stat">
+                  <span className="coaches-diptych__stat-val">2000+</span>
+                  <span className="coaches-diptych__stat-lbl">Classement ELO</span>
+                </div>
+                <div className="coaches-diptych__stat">
+                  <span className="coaches-diptych__stat-val">FFE</span>
+                  <span className="coaches-diptych__stat-lbl">Compétiteur</span>
+                </div>
+              </div>
+              <div className="coaches-diptych__credentials">
+                {["Pédagogie", "Stratégie", "Ouvertures", "Analyse de parties"].map((cred, i) => (
+                  <span key={i} className="coaches-diptych__credential">{cred}</span>
+                ))}
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ======================== QUI SOMMES-NOUS ======================== */}
+      <section className="section section--white founders" id="histoire">
+        <div className="container container--narrow">
+          <Reveal className="section__header">
+            <span className="label">Notre histoire</span>
+            <h2>Deux frères,<br /><span style={{ color: "var(--terracotta)" }}>une idée folle</span></h2>
+          </Reveal>
+
+          <div className="founders__duo">
+            <Reveal className="founders__half" delay={0}>
+              <div className="founders__symbol founders__symbol--chess">♟</div>
+              <blockquote className="founders__pull">
+                &ldquo;Aux échecs, j&apos;ai appris à ralentir.&rdquo;
+              </blockquote>
+              <p className="founders__text">
+                Joueur depuis l&apos;adolescence, les échecs m&apos;ont transformé — pas seulement en stratège, mais en quelqu&apos;un capable de voir les choses autrement. Depuis, j&apos;ai voulu faire découvrir cette magie à ceux qui n&apos;ont jamais osé s&apos;y mettre.
+              </p>
+            </Reveal>
+
+            <div className="founders__divider" aria-hidden="true">
+              <span className="founders__divider-amp">&amp;</span>
+            </div>
+
+            <Reveal className="founders__half" delay={0.15}>
+              <div className="founders__symbol founders__symbol--sport">⚔</div>
+              <blockquote className="founders__pull">
+                &ldquo;Le sport m&apos;a appris à me dépasser.&rdquo;
+              </blockquote>
+              <p className="founders__text">
+                Arts martiaux, fitness, préparation physique — le sport est mon langage depuis toujours. Pas pour la compétition, mais pour le plaisir de se sentir vivant dans son corps. Et pour partager ça avec les autres.
+              </p>
+            </Reveal>
+          </div>
+
+          <Reveal className="founders__vision">
+            <p className="founders__vision-text">
+              Un jour, on a eu une idée simple : <em>et si ces deux univers qu&apos;on chérit pouvaient se rejoindre le temps d&apos;une journée ?</em> Dans un cadre d&apos;exception, avec les bonnes personnes, pour vivre quelque chose de rare. Chess&amp;Fit est née comme ça — d&apos;une conversation entre frères, d&apos;une conviction que le corps et l&apos;esprit méritent d&apos;être chouchoutés le même jour.
+            </p>
           </Reveal>
         </div>
       </section>
@@ -512,7 +645,7 @@ export default function HomePage() {
         <div className="container">
           <div className="footer__content">
             <div>
-              <div className="footer__logo">Chess<span>&amp;</span>Perf</div>
+              <div className="footer__logo">Chess<span>&amp;</span>Fit</div>
               <p className="footer__tagline">Sport, échecs &amp; soleil à Montpellier</p>
             </div>
             <div className="footer__links">
@@ -521,16 +654,17 @@ export default function HomePage() {
                 <a onClick={() => scrollToSection("experience")}>L&apos;expérience</a>
                 <a onClick={() => scrollToSection("journee")}>La journée</a>
                 <a onClick={() => scrollToSection("cadre")}>Le cadre</a>
+                <a href="/blog">Blog</a>
               </div>
               <div className="footer__column">
                 <h4>Contact</h4>
                 <p>Montpellier, France</p>
-                <a href="mailto:contact@chessandperf.com">contact@chessandperf.com</a>
+                <a href="mailto:contact@chessandfit.com">contact@chessandfit.com</a>
               </div>
             </div>
           </div>
           <div className="footer__bottom">
-            <p className="footer__copyright">© 2026 Chess&amp;Perf. Tous droits réservés.</p>
+            <p className="footer__copyright">© 2026 Chess&amp;Fit. Tous droits réservés.</p>
           </div>
         </div>
       </footer>
