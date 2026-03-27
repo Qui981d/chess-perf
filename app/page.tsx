@@ -204,7 +204,6 @@ export default function HomePage() {
             muted
             loop
             playsInline
-            poster="/images/69aa487a.jpg"
             className="hero__video"
           >
             <source src="/Video/Vid%C3%A9o_G%C3%A9n%C3%A9r%C3%A9e_%C3%A0_Partir_d_Images.mp4" type="video/mp4" />
