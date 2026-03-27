@@ -156,7 +156,7 @@ export default function HomePage() {
         }}
         animate={hidden ? "hidden" : "visible"}
         transition={{ duration: 0.35, ease: "easeInOut" }}
-        className={`nav ${scrolled ? "nav--scrolled" : ""}`}
+        className={`nav ${scrolled || mobileMenuOpen ? "nav--scrolled" : ""}`}
       >
         <a href="#" className="nav__logo">
           Chess<span>&amp;</span>Fit
