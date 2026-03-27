@@ -9,8 +9,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Chessboard } from "react-chessboard";
 import { Chess } from "chess.js";
-import { ChevronDown } from "lucide-react";
-
+import { ChevronDown, Check } from "lucide-react";
 // --- Form Schema ---
 const bookingSchema = z.object({
   firstName: z.string().min(2, "Prénom requis"),
@@ -38,7 +37,7 @@ const Reveal = ({ children, className = "", delay = 0, style }: { children: Reac
 // --- FAQ Data ---
 const faqs = [
   { q: "Dois-je amener mon propre jeu d'échecs ?", a: "Non, nous fournissons des jeux en bois Staunton haut de gamme pour toutes les parties et cours." },
-  { q: "Quel niveau physique est requis pour le MMA ?", a: "Aucun ! Notre coach adapte la séance à 100%. Que vous soyez sédentaire ou athlète, vous progresserez en toute sécurité." },
+  { q: "Quel niveau physique est requis pour les séances de sport ?", a: "Aucun ! Notre coach adapte la séance à 100%. Que vous soyez sédentaire ou athlète, vous progresserez en toute sécurité." },
   { q: "Et si la météo n'est pas clémente ?", a: "La villa dispose d'un vaste espace vitré très lumineux. Le programme se déroule tout aussi bien en intérieur qu'en extérieur." },
   { q: "Le repas est-il adapté aux régimes spéciaux ?", a: "Absolument. Lors de la confirmation, nous vous demanderons vos préférences ou intolérances (végétarien, sans gluten, etc.)." }
 ];
@@ -320,7 +319,7 @@ export default function HomePage() {
           <div className="journey__timeline">
             {[
               { time: "9h00", title: "Accueil & café", desc: "Arrivée à la villa. On pose ses affaires, on prend un café, on fait connaissance. Le cadre fait le reste — jardin, piscine, soleil.", img: "/images/69aa487a.jpg" },
-              { time: "10h00 – 12h00", title: "Fitness & MMA", desc: "Deux heures encadrées par un coach agréé. Renforcement musculaire, cardio, et initiation aux techniques de MMA. Tous niveaux, bonne humeur garantie.", img: "/images/sport-deck.png" },
+              { time: "10h00 – 12h00", title: "Fitness & Prépa physique", desc: "Deux heures encadrées par un coach agréé. Renforcement musculaire, cardio, et ateliers de préparation physique. Tous niveaux, bonne humeur garantie.", img: "/images/sport-deck.png" },
               { time: "12h30", title: "Déjeuner au soleil", desc: "Repas frais et convivial servi en terrasse. Le moment de reprendre des forces, discuter stratégie, et profiter du cadre exceptionnel.", img: "/images/lunch-patio.png" },
               { time: "14h00 – 17h00", title: "Échecs & stratégie", desc: "Cours, parties et analyse de jeu avec un professeur d'échecs. Que vous soyez débutant ou joueur confirmé, chaque partie est un plaisir.", img: "/images/chess-patio.png" }
             ].map((step, idx) => (
@@ -379,10 +378,10 @@ export default function HomePage() {
             <div className="coaches-diptych__content">
               <div className="coaches-diptych__tag">
                 <span className="coaches-diptych__tag-line" />
-                <span className="coaches-diptych__tag-text">Sport &amp; MMA</span>
+                <span className="coaches-diptych__tag-text">Sport &amp; Prépa Physique</span>
               </div>
               <h3 className="coaches-diptych__name">Le Coach Sportif</h3>
-              <p className="coaches-diptych__role">Préparateur physique · MMA · Fitness fonctionnel</p>
+              <p className="coaches-diptych__role">Préparateur physique · Cross-Training · Fitness fonctionnel</p>
               <blockquote className="coaches-diptych__quote">
                 &ldquo;Le sport n&apos;est pas une question de performance, c&apos;est une question de dépassement de soi.&rdquo;
               </blockquote>
@@ -401,7 +400,7 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="coaches-diptych__credentials">
-                {["MMA", "Cross-Training", "Prépa physique", "Self-défense"].map((cred, i) => (
+                {["Cross-Training", "Prépa physique", "Renforcement", "Mobilité"].map((cred, i) => (
                   <span key={i} className="coaches-diptych__credential">{cred}</span>
                 ))}
               </div>
@@ -491,7 +490,7 @@ export default function HomePage() {
       </section>
 
       {/* ======================== CHESS WIDGET ======================== */}
-      <section className="section section--white" style={{ paddingBottom: 0 }}>
+      <section className="section section--white">
         <div className="container">
           <Reveal className="section__header" style={{ marginBottom: 0 }}>
             <span className="label" style={{ color: "var(--terracotta)" }}>L&apos;Instant Stratégie</span>
@@ -540,6 +539,68 @@ export default function HomePage() {
                </AnimatePresence>
              </div>
           </Reveal>
+        </div>
+      </section>
+
+      {/* ======================== TARIFS ======================== */}
+      <section className="section section--sand pricing" id="tarifs">
+        <div className="container container--narrow">
+          <Reveal className="section__header">
+            <span className="label">Tarifs</span>
+            <h2>L&apos;expérience <span style={{ color: "var(--terracotta)" }}>accessible</span></h2>
+            <p>Une offre simple, transparente, conçue pour vous faire vivre une parenthèse hors du temps.</p>
+          </Reveal>
+
+          <div className="pricing__grid">
+            {/* Solo */}
+            <Reveal delay={0} className="pricing-card-wrapper">
+              <div className="pricing-card">
+                <div className="pricing-card__header">
+                  <h3 className="pricing-card__title">Le Billet Solo</h3>
+                  <p className="pricing-card__subtitle">L&apos;expérience individuelle</p>
+                </div>
+                <div className="pricing-card__price">
+                  <span className="pricing-card__amount">120</span>
+                  <span className="pricing-card__currency">€</span>
+                  <span className="pricing-card__period">/ pers.</span>
+                </div>
+                <ul className="pricing-card__features">
+                  <li><Check size={18} /> Journée complète (Sport + Échecs)</li>
+                  <li><Check size={18} /> Déjeuner frais et convivial inclus</li>
+                  <li><Check size={18} /> Accès illimité à la villa et piscine</li>
+                  <li><Check size={18} /> Coaching personnalisé</li>
+                </ul>
+                <div className="pricing-card__action">
+                  <button className="btn btn--outline" onClick={() => scrollToSection("reserver")} style={{ width: "100%" }}>Réserver ma place</button>
+                </div>
+              </div>
+            </Reveal>
+
+            {/* Groupe */}
+            <Reveal delay={0.15} className="pricing-card-wrapper">
+              <div className="pricing-card pricing-card--premium">
+                <div className="pricing-card__badge">Recommandé</div>
+                <div className="pricing-card__header">
+                  <h3 className="pricing-card__title">Offre Groupe</h3>
+                  <p className="pricing-card__subtitle">À partir de 4 personnes</p>
+                </div>
+                <div className="pricing-card__price">
+                  <span className="pricing-card__amount">100</span>
+                  <span className="pricing-card__currency">€</span>
+                  <span className="pricing-card__period">/ pers.</span>
+                </div>
+                <ul className="pricing-card__features">
+                  <li><Check size={18} /> Privatisé pour votre groupe</li>
+                  <li><Check size={18} /> Émulation et cohésion d&apos;équipe</li>
+                  <li><Check size={18} /> Repas et activités sur-mesure</li>
+                  <li><Check size={18} /> Réduction exclusive</li>
+                </ul>
+                <div className="pricing-card__action">
+                  <button className="btn btn--primary" onClick={() => scrollToSection("reserver")} style={{ width: "100%" }}>Bloquer une date</button>
+                </div>
+              </div>
+            </Reveal>
+          </div>
         </div>
       </section>
 
